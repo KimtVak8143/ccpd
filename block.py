@@ -9,7 +9,7 @@ from datetime import datetime
 import secrets
 import binascii
 
-rounds = 1
+rounds = 13
 sbox     = [0x0, 0xF, 0xB, 0x8, 0xC, 0x9, 0x6, 0x3, 0xD, 0x1, 0x2, 0x4, 0xA, 0x7, 0x5, 0xE]
 sbox_inv = [0, 9, 10, 7, 11, 14, 6, 13, 3, 5, 12, 2, 4, 8, 15, 1]    
 pbox     = [1, 2, 9, 4, 15, 6, 5, 8, 13, 10, 7, 14, 11, 12, 3, 0]
@@ -19,12 +19,15 @@ class BlockCipher:
   def __init__(self, key):
     self.print = True
 
-    if key.bit_length() >= 128 and (key.bit_length() -128) % 64 == 0:
-      self.master_key_size = key.bit_length()
-      self.master_key = key
+    if key is None:
+      raise ValueError("Key must not be None")
     else:
-      raise ValueError("Key must be a 128-bit or more")
-
+      self.master_key_size = 128
+      if key.bit_length() > 128:
+        self.master_key_size = ( key.bit_length() // 64 ) * 64
+        if key.bit_length() % 64 > 0:
+          self.master_key_size += 64 
+      self.master_key = key
     self.keys = self.generateRoundKeys()
 
   def sBoxLayerInverse(self,state):
